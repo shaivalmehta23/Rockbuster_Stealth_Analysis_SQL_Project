@@ -1,0 +1,55 @@
+-- Check for Non-uniform data
+
+SELECT customer_id, COUNT(*) FROM customer GROUP BY customer_id;
+SELECT store_id, COUNT(*) FROM customer GROUP BY store_id;
+SELECT first_name, COUNT(*) FROM customer GROUP BY first_name;
+SELECT last_name, COUNT(*) FROM customer GROUP BY last_name;
+SELECT email, COUNT(*) FROM customer GROUP BY email;
+SELECT address_id, COUNT(*) FROM customer GROUP BY address_id;
+SELECT activebool, COUNT(*) FROM customer GROUP BY activebool;
+SELECT create_date, COUNT(*) FROM customer GROUP BY create_date;
+SELECT last_update, COUNT(*) FROM customer GROUP BY last_update;
+SELECT active, COUNT(*) FROM customer GROUP BY active;
+
+-- Check for Missing Values
+
+SELECT *
+FROM customer
+WHERE customer_id IS NULL
+  OR TRIM(customer_id::TEXT) IN ('', 'N/A')
+  OR store_id IS NULL
+  OR TRIM(store_id::TEXT) IN ('', 'N/A')
+  OR first_name IS NULL
+  OR TRIM(first_name) IN ('', 'N/A')
+  OR last_name IS NULL
+  OR TRIM(last_name) IN ('', 'N/A')
+  OR email IS NULL
+  OR TRIM(email) IN ('', 'N/A')
+  OR address_id IS NULL
+  OR TRIM(address_id::TEXT) IN ('', 'N/A')
+  OR activebool IS NULL
+  OR TRIM(activebool::TEXT) IN ('', 'N/A')
+  OR create_date IS NULL
+  OR TRIM(create_date::TEXT) IN ('', 'N/A')
+  OR last_update IS NULL
+  OR TRIM(last_update::TEXT) IN ('', 'N/A')
+  OR active IS NULL
+  OR TRIM(active::TEXT) IN ('', 'N/A');
+
+-- Check for Duplicate Values
+
+SELECT store_id,
+  first_name,
+  last_name,
+  email,
+  address_id,
+  active,
+  COUNT(*)
+FROM customer
+GROUP BY store_id,
+  first_name,
+  last_name,
+  email,
+  address_id,
+  active
+HAVING COUNT(*) > 1;
