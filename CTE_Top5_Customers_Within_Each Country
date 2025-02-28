@@ -1,0 +1,62 @@
+This SQL query calculates the top 5 customers average amount paid by the top 5 customers, based on their total payment amount in each country. The query uses CTEs to sequentially filter and aggregate data from the database.
+
+-- CTE to identify the top 10 countries by the number of customers
+WITH Top_10_countries AS
+	(
+	SELECT CO1.country
+	FROM customer C1
+	INNER JOIN address A1 on C1.address_id = A1.address_id
+	INNER JOIN city CI1 on A1.city_id = CI1.city_id
+	INNER JOIN country CO1 on CI1.country_id = CO1.country_id
+	GROUP BY CO1.country
+	ORDER BY COUNT(C1.customer_id) DESC
+	LIMIT 10
+	),
+
+-- CTE to identify the top 10 cities within the top 10 countries
+	Top_city AS
+	(
+	SELECT CI2.city
+	FROM customer C2
+	INNER JOIN address A2 ON C2.address_id = A2.address_id
+	INNER JOIN city CI2 ON A2.city_id = CI2.city_id
+	INNER JOIN country CO2 ON CI2.country_id = CO2.country_id
+	WHERE CO2.country IN
+	(
+	SELECT *
+	FROM Top_10_countries
+	)
+	GROUP BY CO2.country, CI2.city
+	ORDER BY COUNT(C2.customer_id) DESC
+	LIMIT 10
+	),
+
+-- CTE to select the top 5 paying customers within the top 10 cities
+	Top_customer AS
+	(
+	SELECT C3.customer_id, C3.first_name, C3.last_name, CO3.country, SUM(P3.amount) AS total_amount
+	FROM payment P3
+	INNER JOIN customer C3 ON P3.customer_id = C3.customer_id
+	INNER JOIN address A3 ON C3.address_id = A3.address_id
+	INNER JOIN city CI3 ON A3.city_id = CI3.city_id
+	INNER JOIN country CO3 ON CI3.country_id = CO3.country_id
+	WHERE CI3.city IN (
+			SELECT * 
+			FROM Top_city
+			)
+	GROUP BY C3.customer_id, C3.first_name, C3.last_name, CI3.city, CO3.country
+	ORDER BY total_amount DESC
+	LIMIT 5
+	)
+
+-- Counting the top 5 Customers
+SELECT CO4.country,
+		COUNT(DISTINCT C4.customer_id) AS All_customer_count,
+		COUNT(DISTINCT Top_customer.customer_id) AS top_customer_count
+FROM customer C4
+INNER JOIN address A4 ON C4.address_id = A4.address_id
+INNER JOIN city CI4 ON A4.city_id = CI4.city_id
+INNER JOIN country CO4 ON CI4.country_id = CO4.country_id
+LEFT JOIN Top_customer Top_customer ON CO4.country = top_customer.country
+GROUP BY CO4.country
+ORDER BY top_customer_count DESC
